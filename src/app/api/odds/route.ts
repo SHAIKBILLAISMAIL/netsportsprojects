@@ -103,9 +103,14 @@ export async function GET(req: NextRequest) {
     try {
         const oddsUrl = `${BASE_URL}/sports/${sport}/odds/?apiKey=${ODDS_API_KEY}&regions=${region}&markets=${markets}&oddsFormat=decimal`;
 
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
         const response = await fetch(oddsUrl, {
             next: { revalidate: 60 },
+            signal: controller.signal
         });
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
             const errorText = await response.text();

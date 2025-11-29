@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  outputFileTracingRoot: path.resolve(__dirname, '../../'),
+  outputFileTracingRoot: path.resolve(__dirname),
   env: {
     NEXT_PUBLIC_ODDS_WIDGET_KEY: process.env.ODDS_WIDGET_KEY,
   },

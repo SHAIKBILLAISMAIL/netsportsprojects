@@ -5,18 +5,18 @@ import { useEffect, useState } from "react"
 
 export const authClient = createAuthClient({
    baseURL: typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_SITE_URL,
-  fetchOptions: {
+   fetchOptions: {
       headers: {
-        Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem("bearer_token") : ""}`,
+         Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem("bearer_token") : ""}`,
       },
       onSuccess: (ctx) => {
-          const authToken = ctx.response.headers.get("set-auth-token")
-          // Store the token securely (e.g., in localStorage)
-          if(authToken){
+         const authToken = ctx.response.headers.get("set-auth-token")
+         // Store the token securely (e.g., in localStorage)
+         if (authToken) {
             localStorage.setItem("bearer_token", authToken);
-          }
+         }
       }
-  }
+   }
 });
 
 type SessionData = ReturnType<typeof authClient.useSession>
@@ -24,12 +24,14 @@ type SessionData = ReturnType<typeof authClient.useSession>
 export function useSession(): SessionData {
    const [session, setSession] = useState<any>(null);
    const [isPending, setIsPending] = useState(true);
+   const [isRefetching, setIsRefetching] = useState(false);
    const [error, setError] = useState<any>(null);
 
-   const refetch = () => {
-      setIsPending(true);
+   const refetch = async () => {
+      setIsRefetching(true);
       setError(null);
-      fetchSession();
+      await fetchSession();
+      setIsRefetching(false);
    };
 
    const fetchSession = async () => {
@@ -56,5 +58,5 @@ export function useSession(): SessionData {
       fetchSession();
    }, []);
 
-   return { data: session, isPending, error, refetch };
+   return { data: session, isPending, isRefetching, error, refetch };
 }

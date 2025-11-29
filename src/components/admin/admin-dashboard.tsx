@@ -17,6 +17,7 @@ export const AdminDashboard = () => {
   const { data: session, isPending } = useSession();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isChecking, setIsChecking] = useState(true);
+  const [active, setActive] = useState<SectionId>("overview");
 
   // Check if user is admin
   useEffect(() => {
@@ -95,8 +96,6 @@ export const AdminDashboard = () => {
     { id: "support", label: "Support", icon: LifeBuoy },
     { id: "settings", label: "Settings", icon: Settings },
   ];
-
-  const [active, setActive] = useState<SectionId>("overview");
 
   const handleSectionClick = (id: SectionId) => {
     if (id === "social-contacts") {
