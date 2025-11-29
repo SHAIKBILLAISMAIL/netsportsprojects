@@ -22,7 +22,7 @@ export const AdminDashboard = () => {
   useEffect(() => {
     const checkAdminAccess = async () => {
       if (isPending) return;
-      
+
       if (!session?.user) {
         router.push("/login?redirect=/admin");
         return;
@@ -33,12 +33,12 @@ export const AdminDashboard = () => {
         const res = await fetch(`/api/user/balance?userId=${session.user.id}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
-        
+
         if (res.ok) {
           const data = await res.json();
           const role = data.balance?.role || 'user';
           setUserRole(role);
-          
+
           if (role !== 'admin') {
             router.push("/");
             return;
@@ -116,11 +116,10 @@ export const AdminDashboard = () => {
               <button
                 key={id}
                 onClick={() => handleSectionClick(id)}
-                className={`group flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors ${
-                  active === id
-                    ? "bg-sidebar-accent text-foreground"
-                    : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
-                }`}
+                className={`group flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors ${active === id
+                  ? "bg-sidebar-accent text-foreground"
+                  : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
+                  }`}
               >
                 <Icon size={16} className="shrink-0" />
                 <span className="truncate">{label}</span>
@@ -142,6 +141,10 @@ export const AdminDashboard = () => {
 // Types
 type SectionId =
   | "overview"
+  | "coins"
+  | "analytics"
+  | "demo-users"
+  | "user-management"
   | "sports"
   | "live"
   | "casino"
@@ -235,13 +238,19 @@ const SectionRenderer = ({ active }: { active: SectionId }) => {
 };
 
 // Cards utility
-const StatCard = ({ title, value, delta, icon: Icon, tone = "default" as "default" | "positive" | "negative" }) => {
+const StatCard = ({ title, value, delta, icon: Icon, tone = "default" }: {
+  title: string;
+  value: string;
+  delta?: string;
+  icon?: any;
+  tone?: "default" | "positive" | "negative"
+}) => {
   const toneClasses =
     tone === "positive"
       ? "text-emerald-400"
       : tone === "negative"
-      ? "text-red-400"
-      : "text-muted-foreground";
+        ? "text-red-400"
+        : "text-muted-foreground";
   return (
     <div className="rounded-lg border border-border bg-card p-4">
       <div className="flex items-center justify-between">
@@ -276,21 +285,21 @@ const OverviewSection = () => {
         setLoading(true);
         setError(null);
         const token = typeof window !== "undefined" ? localStorage.getItem("bearer_token") : null;
-        
+
         // Fetch wins/losses data
         const wlRes = await fetch("/api/admin/stats/wins-losses?days=7", {
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
-        
+
         if (wlRes.ok) {
           const wlData = await wlRes.json();
           setWinsLossesData(wlData.stats || []);
-          
+
           // Calculate stats from wins/losses data
           if (wlData.stats && wlData.stats.length > 0) {
             const today = wlData.stats[0];
             const yesterday = wlData.stats[1] || today;
-            
+
             setStats({
               ggr24h: today.profit || 0,
               ggrDelta: yesterday.profit ? ((today.profit - yesterday.profit) / yesterday.profit * 100) : 0,
@@ -307,7 +316,7 @@ const OverviewSection = () => {
         const revRes = await fetch("/api/admin/stats/revenue?days=7", {
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
-        
+
         if (revRes.ok) {
           const revData = await revRes.json();
           setRevenueData(revData);
@@ -327,32 +336,32 @@ const OverviewSection = () => {
         <div className="rounded-md border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-300">{error}</div>
       )}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard 
-          title="GGR (24h)" 
-          value={`$${stats.ggr24h.toLocaleString()}`} 
-          delta={`${stats.ggrDelta >= 0 ? "▲" : "▼"} ${Math.abs(stats.ggrDelta).toFixed(1)}% vs yesterday`} 
-          icon={CircleDollarSign} 
-          tone={stats.ggrDelta >= 0 ? "positive" : "negative"} 
+        <StatCard
+          title="GGR (24h)"
+          value={`$${stats.ggr24h.toLocaleString()}`}
+          delta={`${stats.ggrDelta >= 0 ? "▲" : "▼"} ${Math.abs(stats.ggrDelta).toFixed(1)}% vs yesterday`}
+          icon={CircleDollarSign}
+          tone={stats.ggrDelta >= 0 ? "positive" : "negative"}
         />
-        <StatCard 
-          title="Bets (24h)" 
-          value={stats.bets24h.toLocaleString()} 
-          delta={`${stats.betsDelta >= 0 ? "▲" : "▼"} ${Math.abs(stats.betsDelta).toFixed(1)}%`} 
-          icon={Coins} 
-          tone={stats.betsDelta >= 0 ? "positive" : "negative"} 
+        <StatCard
+          title="Bets (24h)"
+          value={stats.bets24h.toLocaleString()}
+          delta={`${stats.betsDelta >= 0 ? "▲" : "▼"} ${Math.abs(stats.betsDelta).toFixed(1)}%`}
+          icon={Coins}
+          tone={stats.betsDelta >= 0 ? "positive" : "negative"}
         />
-        <StatCard 
-          title="Active Users" 
-          value={stats.activeUsers.toLocaleString()} 
-          delta="—" 
-          icon={Users} 
+        <StatCard
+          title="Active Users"
+          value={stats.activeUsers.toLocaleString()}
+          delta="—"
+          icon={Users}
         />
-        <StatCard 
-          title="Payout Ratio" 
-          value={`${stats.payoutRatio.toFixed(1)}%`} 
-          delta={`${stats.payoutDelta >= 0 ? "▲" : "▼"} ${Math.abs(stats.payoutDelta).toFixed(1)}%`} 
-          icon={BarChart3} 
-          tone={stats.payoutDelta >= 0 ? "positive" : "negative"} 
+        <StatCard
+          title="Payout Ratio"
+          value={`${stats.payoutRatio.toFixed(1)}%`}
+          delta={`${stats.payoutDelta >= 0 ? "▲" : "▼"} ${Math.abs(stats.payoutDelta).toFixed(1)}%`}
+          icon={BarChart3}
+          tone={stats.payoutDelta >= 0 ? "positive" : "negative"}
         />
       </div>
 
@@ -369,13 +378,13 @@ const OverviewSection = () => {
                   <div className="w-20 text-xs text-muted-foreground">{new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
                   <div className="flex-1">
                     <div className="flex gap-1">
-                      <div 
+                      <div
                         className="h-6 bg-emerald-500/30 rounded-sm flex items-center justify-center text-xs font-medium"
                         style={{ width: `${(day.wonBets / day.totalBets * 100) || 0}%`, minWidth: day.wonBets > 0 ? '30px' : '0' }}
                       >
                         {day.wonBets}
                       </div>
-                      <div 
+                      <div
                         className="h-6 bg-red-500/30 rounded-sm flex items-center justify-center text-xs font-medium"
                         style={{ width: `${(day.lostBets / day.totalBets * 100) || 0}%`, minWidth: day.lostBets > 0 ? '30px' : '0' }}
                       >
@@ -406,7 +415,7 @@ const OverviewSection = () => {
                   <div key={day.date} className="flex items-center gap-2">
                     <div className="w-20 text-xs text-muted-foreground">{new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
                     <div className="flex-1">
-                      <div 
+                      <div
                         className="h-6 bg-primary/30 rounded-sm flex items-center justify-end px-2 text-xs font-medium"
                         style={{ width: `${barWidth}%`, minWidth: '40px' }}
                       >
@@ -439,7 +448,7 @@ const CoinManagement = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
-  
+
   // Coin dialogs
   const [addDialog, setAddDialog] = useState<{ open: boolean; user: any | null }>({ open: false, user: null });
   const [removeDialog, setRemoveDialog] = useState<{ open: boolean; user: any | null }>({ open: false, user: null });
@@ -470,8 +479,8 @@ const CoinManagement = () => {
     }
   };
 
-  const filteredUsers = useMemo(() => 
-    users.filter(u => 
+  const filteredUsers = useMemo(() =>
+    users.filter(u =>
       u.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       u.email?.toLowerCase().includes(searchQuery.toLowerCase())
     ),
@@ -492,7 +501,7 @@ const CoinManagement = () => {
       const token = typeof window !== "undefined" ? localStorage.getItem("bearer_token") : null;
       const res = await fetch("/api/admin/balances/add", {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
@@ -534,7 +543,7 @@ const CoinManagement = () => {
       const token = typeof window !== "undefined" ? localStorage.getItem("bearer_token") : null;
       const res = await fetch("/api/admin/balances/remove", {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
@@ -560,6 +569,18 @@ const CoinManagement = () => {
     } finally {
       setProcessing(false);
     }
+  };
+
+  const openAddCoins = (user: any) => {
+    setAddDialog({ open: true, user });
+    setAmount("");
+    setDescription("");
+  };
+
+  const openRemoveCoins = (user: any) => {
+    setRemoveDialog({ open: true, user });
+    setAmount("");
+    setDescription("");
   };
 
   return (
@@ -611,11 +632,10 @@ const CoinManagement = () => {
                 <td className="px-3 py-2">{u.name}</td>
                 <td className="px-3 py-2 text-muted-foreground">{u.email}</td>
                 <td className="px-3 py-2">
-                  <span className={`rounded-md px-2 py-1 text-xs ${
-                    u.role === 'admin' ? 'bg-red-500/10 text-red-400' :
+                  <span className={`rounded-md px-2 py-1 text-xs ${u.role === 'admin' ? 'bg-red-500/10 text-red-400' :
                     u.role === 'agent' ? 'bg-blue-500/10 text-blue-400' :
-                    'bg-green-500/10 text-green-400'
-                  }`}>
+                      'bg-green-500/10 text-green-400'
+                    }`}>
                     {u.role}
                   </span>
                 </td>
@@ -887,14 +907,14 @@ const AnalyticsGraphs = () => {
                   </div>
                   <div className="flex-1">
                     <div className="flex gap-1">
-                      <div 
+                      <div
                         className="h-8 bg-emerald-500/30 rounded flex items-center justify-center text-xs font-medium hover:bg-emerald-500/40 transition-colors"
                         style={{ width: `${wonPct}%`, minWidth: day.wonBets > 0 ? '40px' : '0' }}
                         title={`Won: ${day.wonBets}`}
                       >
                         {day.wonBets > 0 && day.wonBets}
                       </div>
-                      <div 
+                      <div
                         className="h-8 bg-red-500/30 rounded flex items-center justify-center text-xs font-medium hover:bg-red-500/40 transition-colors"
                         style={{ width: `${lostPct}%`, minWidth: day.lostBets > 0 ? '40px' : '0' }}
                         title={`Lost: ${day.lostBets}`}
@@ -937,7 +957,7 @@ const AnalyticsGraphs = () => {
                       {new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </div>
                     <div className="flex-1">
-                      <div 
+                      <div
                         className="h-7 bg-primary/30 rounded flex items-center justify-end px-2 text-xs font-medium"
                         style={{ width: `${barWidth}%`, minWidth: '50px' }}
                       >
@@ -972,7 +992,7 @@ const AnalyticsGraphs = () => {
                       {new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </div>
                     <div className="flex-1">
-                      <div 
+                      <div
                         className="h-7 bg-blue-500/30 rounded flex items-center justify-end px-2 text-xs font-medium hover:bg-blue-500/40 transition-colors"
                         style={{ width: `${activeWidth}%`, minWidth: '40px' }}
                         title={`Active: ${day.activeUsers}`}
@@ -1009,7 +1029,7 @@ const UsersSection = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Coin management dialogs
   const [addCoinDialog, setAddCoinDialog] = useState<{ open: boolean; user: any | null }>({ open: false, user: null });
   const [removeCoinDialog, setRemoveCoinDialog] = useState<{ open: boolean; user: any | null }>({ open: false, user: null });
@@ -1043,8 +1063,8 @@ const UsersSection = () => {
 
   const rows = useMemo(
     () =>
-      users.filter((u) => 
-        u.name?.toLowerCase().includes(q.toLowerCase()) || 
+      users.filter((u) =>
+        u.name?.toLowerCase().includes(q.toLowerCase()) ||
         u.email?.toLowerCase().includes(q.toLowerCase())
       ),
     [q, users]
@@ -1076,7 +1096,7 @@ const UsersSection = () => {
       const token = typeof window !== "undefined" ? localStorage.getItem("bearer_token") : null;
       const res = await fetch("/api/admin/balances/add", {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
@@ -1118,7 +1138,7 @@ const UsersSection = () => {
       const token = typeof window !== "undefined" ? localStorage.getItem("bearer_token") : null;
       const res = await fetch("/api/admin/balances/remove", {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
@@ -1195,11 +1215,10 @@ const UsersSection = () => {
                 <td className="px-3 py-2">{u.name}</td>
                 <td className="px-3 py-2 text-muted-foreground">{u.email}</td>
                 <td className="px-3 py-2">
-                  <span className={`rounded-md px-2 py-1 text-xs ${
-                    u.role === 'admin' ? 'bg-red-500/10 text-red-400' :
+                  <span className={`rounded-md px-2 py-1 text-xs ${u.role === 'admin' ? 'bg-red-500/10 text-red-400' :
                     u.role === 'agent' ? 'bg-blue-500/10 text-blue-400' :
-                    'bg-green-500/10 text-green-400'
-                  }`}>
+                      'bg-green-500/10 text-green-400'
+                    }`}>
                     {u.role}
                   </span>
                 </td>
@@ -1266,16 +1285,16 @@ const UsersSection = () => {
             </div>
           </div>
           <DialogFooter>
-            <button 
-              onClick={() => setAddCoinDialog({ open: false, user: null })} 
-              disabled={coinProcessing} 
+            <button
+              onClick={() => setAddCoinDialog({ open: false, user: null })}
+              disabled={coinProcessing}
               className="rounded-md border border-border px-4 py-2 text-sm"
             >
               Cancel
             </button>
-            <button 
-              onClick={handleAddCoins} 
-              disabled={coinProcessing || !coinAmount} 
+            <button
+              onClick={handleAddCoins}
+              disabled={coinProcessing || !coinAmount}
               className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50"
             >
               {coinProcessing ? "Adding..." : "Add Coins"}
@@ -1296,8 +1315,8 @@ const UsersSection = () => {
               <Input
                 id="remove-amount"
                 type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                value={coinAmount}
+                onChange={(e) => setCoinAmount(e.target.value)}
                 placeholder="Enter amount"
                 min="1"
                 max={removeCoinDialog.user?.coins || 0}
@@ -1307,8 +1326,8 @@ const UsersSection = () => {
               <Label htmlFor="remove-desc">Description (Optional)</Label>
               <Input
                 id="remove-desc"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                value={coinDescription}
+                onChange={(e) => setCoinDescription(e.target.value)}
                 placeholder="e.g., Penalty deduction"
               />
             </div>
@@ -1338,7 +1357,7 @@ const UsersSection = () => {
             </button>
             <button
               onClick={handleRemoveCoins}
-              disabled={coinProcessing || !amount || (parseInt(amount) || 0) > (removeCoinDialog.user?.coins || 0)}
+              disabled={coinProcessing || !coinAmount || (parseInt(coinAmount) || 0) > (removeCoinDialog.user?.coins || 0)}
               className="rounded-md bg-red-500 px-4 py-2 text-sm text-white disabled:opacity-50"
             >
               {coinProcessing ? "Removing..." : "Remove Coins"}
@@ -1433,20 +1452,6 @@ const PaymentsSection = () => {
   );
 };
 
-const PromotionsManagement = () => {
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">Campaigns</h3>
-        <button className="rounded-md bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground">Create Campaign</button>
-      </div>
-      <div className="rounded-lg border border-border bg-card p-4">
-        <div className="h-40 rounded-md border border-dashed border-border/60" />
-        <p className="mt-2 text-xs text-muted-foreground">Campaign list placeholder – connect later.</p>
-      </div>
-    </div>
-  );
-};
 
 const ReportsSection = () => (
   <div className="space-y-4">

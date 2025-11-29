@@ -39,8 +39,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search');
     const isActiveParam = searchParams.get('isActive');
 
-    let query = db.select().from(promotions);
-    let conditions = [];
+    const conditions = [];
 
     // Filter by isActive if provided
     if (isActiveParam !== null) {
@@ -57,23 +56,26 @@ export async function GET(request: NextRequest) {
       conditions.push(searchCondition);
     }
 
-    // Apply conditions if any
+    // Build query with conditions
+    let queryBuilder = db.select().from(promotions);
+
     if (conditions.length > 0) {
-      query = query.where(and(...conditions));
+      queryBuilder = queryBuilder.where(and(...conditions)) as typeof queryBuilder;
     }
 
-    // Order by orderIndex ASC, then id DESC
-    const results = await query
+    const results = await queryBuilder
       .orderBy(asc(promotions.orderIndex), desc(promotions.id))
       .limit(limit)
       .offset(offset);
 
     // Get total count for pagination
-    let countQuery = db.select().from(promotions);
+    let countQueryBuilder = db.select().from(promotions);
+
     if (conditions.length > 0) {
-      countQuery = countQuery.where(and(...conditions));
+      countQueryBuilder = countQueryBuilder.where(and(...conditions)) as typeof countQueryBuilder;
     }
-    const totalRecords = await countQuery;
+
+    const totalRecords = await countQueryBuilder;
     const total = totalRecords.length;
 
     return NextResponse.json({
